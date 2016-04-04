@@ -49,6 +49,9 @@ public class FractalComponent extends JComponent {
 	public void fractal(Graphics g, double x0, double x1, double y0, double y1,
 			int depth) {
 		double l = Math.sqrt((x1 - x0) * (x1 - x0) + (y1 - y0) * (y1 - y0));
+		if (Double.isNaN(l)) {
+			return;
+		}
 		if (l < 2 || depth >= 9) {
 			line(g, x0, y0 / 3 + 50, x1, y1 / 3 + 50, 0xFF, 0xFFFF);
 			return;
@@ -73,6 +76,13 @@ public class FractalComponent extends JComponent {
 	 */
 	public void line(Graphics g, double x0, double x1, double y0, double y1,
 			int mystery1, int mystery2) {
+		double[] doubles = { x0, y0, x1, y1 };
+		for (double d : doubles) {
+			if (Double.isNaN(d)) {
+				return;
+			}
+		}
+		
 		// System.out.printf("%f, %f, %f, %f%n", x0, y0, x1, y1);
 		g.drawLine((int) x0, (int) x1, (int) y0, (int) y1);
 	}
