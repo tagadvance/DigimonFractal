@@ -28,5 +28,5 @@
 340 endfunc
 ```
 ### Sources
-* [Digimon](http://fingswotidun.com/code/index.php/Digimon) uses the [Creative Commons Attribution-ShareAlike 3.0 License](http://creativecommons.org/licenses/by-sa/3.0/) 
+* [Digimon](http://fingswotidun.com/code/index.php/Digimon) under the [Creative Commons Attribution-ShareAlike 3.0 License](http://creativecommons.org/licenses/by-sa/3.0/) 
 * [Running Izzy's "Digivolving" Code](http://digitalworldproblems.tumblr.com/post/76036641581/while-im-looking-at-that-moviecode-post-he)
