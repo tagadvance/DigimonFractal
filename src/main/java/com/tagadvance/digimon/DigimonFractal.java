@@ -28,8 +28,9 @@ public class DigimonFractal implements Runnable {
 		container.setBackground(WHITE);
 		double seed = 2;
 		System.out.printf("%f%n", seed);
-		JComponent fractal = new FractalComponent(seed);
-		container.add(fractal);
+		FractalPainter painter = new FractalPainter(seed);
+		JComponent fractalComponent = new FractalComponent(painter);
+		container.add(fractalComponent);
 		window.pack();
 		window.setLocationRelativeTo(null);
 		window.setVisible(true);
