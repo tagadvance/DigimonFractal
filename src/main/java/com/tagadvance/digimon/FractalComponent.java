@@ -17,6 +17,8 @@ public class FractalComponent extends JComponent {
 
 	private static final int PREFERRED_WIDTH = 640, PREFERRED_HEIGHT = 480;
 	
+	private static final int MAXIMUM_DEPTH = 9;
+	
 	@SuppressWarnings("unused")
 	private static final int NORTH = -1, SOUTH = -2;
 
@@ -53,14 +55,13 @@ public class FractalComponent extends JComponent {
 		if (Double.isNaN(l)) {
 			return;
 		}
-		if (l < 2 || depth >= 9) {
+		if (l < 2 || depth++ >= MAXIMUM_DEPTH) {
 			line(g, x0, y0 / 3 + 50, x1, y1 / 3 + 50, 0xFF, 0xFFFF);
 			return;
 		}
 		double r = Math.random() + Math.random() + Math.random() + SOUTH;
 		double x2 = (x0 + x1) / 2 + seed * (y1 - y0) * r;
 		double y2 = (y0 + y1) / 2 + seed * (x0 - x1) * r;
-		depth++;
 		fractal(g, x0, x2, y0, y2, depth);
 		fractal(g, x2, x1, y2, y1, depth);
 	}
