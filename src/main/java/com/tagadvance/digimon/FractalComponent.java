@@ -30,6 +30,7 @@ public class FractalComponent extends JComponent {
 	}
 
 	{
+		setDoubleBuffered(true);
 		setPreferredSize(new Dimension(PREFERRED_WIDTH, PREFERRED_HEIGHT));
 	}
 
