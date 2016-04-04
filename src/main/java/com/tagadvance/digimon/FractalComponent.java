@@ -1,5 +1,6 @@
 package com.tagadvance.digimon;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 
@@ -82,6 +83,11 @@ public class FractalComponent extends JComponent {
 				return;
 			}
 		}
+		
+		int white = 0xFFFFFF;
+		int rgb = (int) (Math.random() * white);
+		Color color = new Color(rgb);
+		g.setColor(color);
 		
 		// System.out.printf("%f, %f, %f, %f%n", x0, y0, x1, y1);
 		g.drawLine((int) x0, (int) x1, (int) y0, (int) y1);
