@@ -6,7 +6,8 @@ version = '1.0'
 jar {
     manifest {
         attributes 'Implementation-Title': 'DigimonFractal',
-                   'Implementation-Version': version
+                   'Implementation-Version': version,
+                   'Main-Class': 'com.tagadvance.digimon.Main'
     }
 }
 
