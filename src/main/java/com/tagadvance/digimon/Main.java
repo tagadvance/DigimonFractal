@@ -5,7 +5,10 @@ import static java.awt.image.BufferedImage.TYPE_INT_RGB;
 import static javax.swing.JOptionPane.ERROR_MESSAGE;
 
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Container;
+import java.awt.Cursor;
+import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Window;
@@ -15,12 +18,18 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.Locale;
 import java.util.ResourceBundle;
 import java.util.concurrent.ExecutionException;
 
 import javax.imageio.ImageIO;
 import javax.swing.GroupLayout;
+import javax.swing.JComponent;
+import javax.swing.JEditorPane;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -38,6 +47,9 @@ import javax.swing.UIManager;
 import javax.swing.WindowConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkEvent.EventType;
+import javax.swing.event.HyperlinkListener;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
@@ -206,7 +218,7 @@ public class Main implements Runnable {
 			public void actionPerformed(ActionEvent e) {
 				String title = resourceBundle.getString("aboutTitle");
 				JFrame dialog = new JFrame(title);
-				int width = 520, height = 200;
+				int width = 540, height = 240;
 				Dimension preferredSize = new Dimension(width, height);
 				String text = resourceBundle.getString("aboutText");
 				Container about = createAbout(text, preferredSize);
@@ -269,7 +281,12 @@ public class Main implements Runnable {
 	}
 	
 	public Container createAbout(String text, Dimension preferredSize) {
-		JLabel label = new JLabel(text);
+		String mimeType = "text/html";
+		JEditorPane editor = new JEditorPane(mimeType, text);
+		editor.setOpaque(false);
+		editor.setEditable(false);
+		editor.addHyperlinkListener(new SimpleHyperlinkListener(editor));
+		editor.setFocusable(true);
 		JPanel panel = new JPanel();
 		panel.setPreferredSize(preferredSize);
 		GroupLayout layout = new GroupLayout(panel);
@@ -278,17 +295,65 @@ public class Main implements Runnable {
 			layout.createParallelGroup(GroupLayout.Alignment.LEADING)
 			.addGroup(layout.createSequentialGroup()
 				.addContainerGap()
-				.addComponent(label)
+				.addComponent(editor)
 				.addContainerGap())
 		);
 		layout.setVerticalGroup(
 			layout.createParallelGroup(GroupLayout.Alignment.LEADING)
 			.addGroup(layout.createSequentialGroup()
 				.addContainerGap()
-				.addComponent(label)
+				.addComponent(editor)
 				.addContainerGap())
 		);
 		return panel;
+	}
+	
+	public static class SimpleHyperlinkListener implements HyperlinkListener {
+
+		private final Component sourceComponent;
+
+		public SimpleHyperlinkListener(Component sourceComponent) {
+			super();
+			this.sourceComponent = sourceComponent;
+		}
+
+		@Override
+		public void hyperlinkUpdate(HyperlinkEvent e) {
+			EventType eventType = e.getEventType();
+			if (eventType == EventType.ENTERED) {
+				Cursor cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
+				sourceComponent.setCursor(cursor);
+			} else if (eventType == EventType.ACTIVATED) {
+				URL url = e.getURL();
+				String externalForm = url.toExternalForm();
+				Desktop desktop = Desktop.getDesktop();
+				if (externalForm.startsWith("mailto:") && desktop.isSupported(Desktop.Action.MAIL)) {
+					try {
+						URI uri = url.toURI();
+						desktop.mail(uri);
+						return;
+					} catch (URISyntaxException ex) {
+						ex.printStackTrace(System.err);
+					} catch (IOException ex) {
+						ex.printStackTrace(System.err);
+					}
+				}
+				if (desktop.isSupported(Desktop.Action.BROWSE)) {
+					try {
+						URI uri = url.toURI();
+						desktop.browse(uri);
+					} catch (URISyntaxException ex) {
+						ex.printStackTrace(System.err);
+					} catch (IOException ex) {
+						ex.printStackTrace(System.err);
+					}
+				}
+			} else if (eventType == EventType.EXITED) {
+				Cursor cursor = Cursor.getDefaultCursor();
+				sourceComponent.setCursor(cursor);
+			}
+		}
+
 	}
 
 }
