@@ -1,5 +1,11 @@
 # DigimonFractal
 
+## Images
+![Coast](/images/coast.png?raw=true "Coast")
+![Crazy](/images/crazy.png?raw=true "Crazy")
+![Test](/images/test.png?raw=true "Test")
+
+## /* func sample. coast creation */
 ```
 100 /* func sample. coast creation */
 110 float s
