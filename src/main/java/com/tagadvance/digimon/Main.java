@@ -109,17 +109,29 @@ public class Main implements Runnable {
 		slider.setMaximum(2000);
 		slider.setMinimum(1000);
 		slider.addChangeListener(new ChangeListener() {
+
+			/**
+			 * Ignore final event, when the mouse is released. One could also
+			 * use <code>slider.getValueIsAdjusting()</code>; however, I like
+			 * watching the fractal change.
+			 */
+			private int previousValue;
+
 			@Override
 			public void stateChanged(ChangeEvent e) {
 				Object source = e.getSource();
 				if (source instanceof JSlider) {
 					JSlider slider = (JSlider) source;
 					int value = slider.getValue();
-					double seed = value / 1000d;
-					painter.setSeed(seed);
-					updateCanvasImage(canvas, image);
+					if (value != previousValue) {
+						double seed = value / 1000d;
+						painter.setSeed(seed);
+						updateCanvasImage(canvas, image);
+						previousValue = value;
+					}
 				}
 			}
+
 		});
 
 		String file = resourceBundle.getString("file");
