@@ -322,32 +322,29 @@ public class Main implements Runnable {
 				sourceComponent.setCursor(cursor);
 			} else if (eventType == EventType.ACTIVATED) {
 				URL url = e.getURL();
-				String externalForm = url.toExternalForm();
-				Desktop desktop = Desktop.getDesktop();
-				if (externalForm.startsWith("mailto:") && desktop.isSupported(Desktop.Action.MAIL)) {
-					try {
-						URI uri = url.toURI();
-						desktop.mail(uri);
-						return;
-					} catch (URISyntaxException ex) {
-						ex.printStackTrace(System.err);
-					} catch (IOException ex) {
-						ex.printStackTrace(System.err);
-					}
-				}
-				if (desktop.isSupported(Desktop.Action.BROWSE)) {
-					try {
-						URI uri = url.toURI();
-						desktop.browse(uri);
-					} catch (URISyntaxException ex) {
-						ex.printStackTrace(System.err);
-					} catch (IOException ex) {
-						ex.printStackTrace(System.err);
-					}
-				}
+				open(url);
 			} else if (eventType == EventType.EXITED) {
 				Cursor cursor = Cursor.getDefaultCursor();
 				sourceComponent.setCursor(cursor);
+			}
+		}
+
+		public void open(URL url) {
+			String externalForm = url.toExternalForm();
+			Desktop desktop = Desktop.getDesktop();
+			try {
+				URI uri = url.toURI();
+				if (externalForm.startsWith("mailto:")) {
+					if (desktop.isSupported(Desktop.Action.MAIL)) {
+						desktop.mail(uri);
+					}
+				} else if (desktop.isSupported(Desktop.Action.BROWSE)) {
+					desktop.browse(uri);
+				}
+			} catch (URISyntaxException ex) {
+				ex.printStackTrace(System.err);
+			} catch (IOException ex) {
+				ex.printStackTrace(System.err);
 			}
 		}
 
