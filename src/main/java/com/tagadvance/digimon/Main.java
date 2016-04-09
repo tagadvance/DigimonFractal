@@ -28,11 +28,9 @@ import java.util.concurrent.ExecutionException;
 
 import javax.imageio.ImageIO;
 import javax.swing.GroupLayout;
-import javax.swing.JComponent;
 import javax.swing.JEditorPane;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
@@ -69,10 +67,10 @@ public class Main implements Runnable {
 			e.printStackTrace(System.err);
 		}
 	}
-	
+
 	private final ResourceBundle resourceBundle;
 	private final FractalPainter painter;
-	
+
 	public Main(ResourceBundle resourceBundle, FractalPainter painter) {
 		super();
 		this.resourceBundle = resourceBundle;
@@ -100,12 +98,12 @@ public class Main implements Runnable {
 		final JFrame frame = new JFrame(title);
 		frame.setResizable(false);
 		frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-		
+
 		final BufferedImage image = createCanvasImage();
 		final CanvasComponent canvas = new CanvasComponent(image);
 		canvas.setBackground(BLACK);
 		updateCanvasImage(canvas, image);
-		
+
 		JSlider slider = new JSlider();
 		slider.setMajorTickSpacing(100);
 		slider.setMaximum(2000);
@@ -123,7 +121,7 @@ public class Main implements Runnable {
 				}
 			}
 		});
-		
+
 		String file = resourceBundle.getString("file");
 		JMenu menuFile = new JMenu(file);
 		String saveAs = resourceBundle.getString("saveAs");
@@ -184,7 +182,7 @@ public class Main implements Runnable {
 
 		});
 		menuFile.add(menuItemSaveAs);
-		
+
 		String refresh = resourceBundle.getString("refresh");
 		JMenuItem menuItemRefresh = new JMenuItem(refresh, KeyEvent.VK_R);
 		KeyStroke f5KeyStroke = KeyStroke.getKeyStroke("F5");
@@ -196,7 +194,7 @@ public class Main implements Runnable {
 			}
 		});
 		menuFile.add(menuItemRefresh);
-		
+
 		String exit = resourceBundle.getString("exit");
 		JMenuItem menuItemExit = new JMenuItem(exit);
 		int modifiers = 0;
@@ -209,7 +207,7 @@ public class Main implements Runnable {
 			}
 		});
 		menuFile.add(menuItemExit);
-		
+
 		String help = resourceBundle.getString("help");
 		JMenu menuHelp = new JMenu(help);
 		JMenuItem menuItemAbout = new JMenuItem("About", KeyEvent.VK_A);
@@ -264,8 +262,7 @@ public class Main implements Runnable {
 	
 	protected BufferedImage createCanvasImage() {
 		int width = 512, height = 200;
-		BufferedImage image = new BufferedImage(width, height,
-				TYPE_INT_RGB);
+		BufferedImage image = new BufferedImage(width, height, TYPE_INT_RGB);
 		return image;
 	}
 	
