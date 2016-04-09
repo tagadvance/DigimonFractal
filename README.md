@@ -36,6 +36,7 @@
 ### Sources
 * [Digimon](http://fingswotidun.com/code/index.php/Digimon) under the [Creative Commons Attribution-ShareAlike 3.0 License](http://creativecommons.org/licenses/by-sa/3.0/) 
 * [Running Izzy's "Digivolving" Code](http://digitalworldproblems.tumblr.com/post/76036641581/while-im-looking-at-that-moviecode-post-he)
+* [Source Code in TV and Films](http://moviecode.tumblr.com/post/104138324198/a-code-snippet-from-digimon-digital-monsters)
 
 ## License
 [The Unlicense](http://unlicense.org/)
