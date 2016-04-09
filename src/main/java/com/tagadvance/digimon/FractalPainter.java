@@ -9,7 +9,7 @@ import java.awt.Graphics;
  *
  */
 public class FractalPainter implements Painter {
-	
+
 	private static final int MINIMUM_SEED = 1, MAXIMUM_SEED = 2;
 	private static final int MAXIMUM_DEPTH = 9;
 
@@ -18,6 +18,7 @@ public class FractalPainter implements Painter {
 
 	private double seed;
 	private double mutableSeed;
+	private int verticalOffset = 100;
 
 	public FractalPainter(double seed) {
 		super();
@@ -37,6 +38,17 @@ public class FractalPainter implements Painter {
 		this.seed = this.mutableSeed = seed;
 	}
 
+	public int getVerticalOffset() {
+		return verticalOffset;
+	}
+
+	public void setVerticalOffset(int verticalOffset) {
+		if (verticalOffset < 0) {
+			throw new IllegalArgumentException("verticalOffset must be >= 0");
+		}
+		this.verticalOffset = verticalOffset;
+	}
+
 	public void paintCustom(Graphics g) {
 		// what does this do?
 		// screen 1,2,1,1
@@ -45,16 +57,18 @@ public class FractalPainter implements Painter {
 		mutableSeed = Math.sqrt(mutableSeed * mutableSeed - 1);
 		double x0 = 100, x1 = 412, y0 = 0, y1 = 0;
 		fractal(g, x0, x1, y0, y1, 1);
-		line(g, 100, 50, 412, 50, 0xFF, 0xFFFF);
+		line(g, x0, verticalOffset, x1, verticalOffset, 0xFF, 0xFFFF);
 	}
 
 	public void fractal(Graphics g, double x0, double x1, double y0, double y1, int depth) {
-		double l = Math.sqrt((x1 - x0) * (x1 - x0) + (y1 - y0) * (y1 - y0));
+		double xDifference = x1 - x0, xDifferenceSquared = Math.pow(xDifference, 2);
+		double yDifference = y1 - y0, yDifferenceSquared = Math.pow(yDifference, 2);
+		double l = Math.sqrt(xDifferenceSquared + yDifferenceSquared);
 		if (Double.isNaN(l)) {
 			return;
 		}
 		if (l < 2 || depth++ >= MAXIMUM_DEPTH) {
-			line(g, x0, y0 / 3 + 50, x1, y1 / 3 + 50, 0xFF, 0xFFFF);
+			line(g, x0, y0 / 3 + verticalOffset, x1, y1 / 3 + verticalOffset, 0xFF, 0xFFFF);
 			return;
 		}
 		double r = Math.random() + Math.random() + Math.random() + SOUTH;
@@ -71,8 +85,10 @@ public class FractalPainter implements Painter {
 	 * @param x1
 	 * @param y0
 	 * @param y1
-	 * @param mystery1 opacity?
-	 * @param mystery2 color?
+	 * @param mystery1
+	 *            opacity?
+	 * @param mystery2
+	 *            color?
 	 */
 	public void line(Graphics g, double x0, double x1, double y0, double y1, int mystery1, int mystery2) {
 		double[] doubles = { x0, y0, x1, y1 };
