@@ -19,6 +19,7 @@ public class FractalPainter implements Painter {
 	private double seed;
 	private double mutableSeed;
 	private int verticalOffset = 100;
+	private double verticalBias = .333;
 
 	public FractalPainter(double seed) {
 		super();
@@ -66,11 +67,11 @@ public class FractalPainter implements Painter {
 		double l = Math.sqrt(xDifferenceSquared + yDifferenceSquared);
 		if (Double.isNaN(l)) {
 			return;
-		}
-		if (l < 2 || depth++ >= MAXIMUM_DEPTH) {
-			line(g, x0, y0 / 3 + verticalOffset, x1, y1 / 3 + verticalOffset, 0xFF, 0xFFFF);
+		} else if (l < 2 || depth++ >= MAXIMUM_DEPTH) {
+			line(g, x0, y0 * verticalBias + verticalOffset, x1, y1 * verticalBias + verticalOffset, 0xFF, 0xFFFF);
 			return;
 		}
+		
 		double r = Math.random() + Math.random() + Math.random() + SOUTH;
 		double x2 = (x0 + x1) / 2 + mutableSeed * (y1 - y0) * r;
 		double y2 = (y0 + y1) / 2 + mutableSeed * (x0 - x1) * r;
