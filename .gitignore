@@ -38,3 +38,5 @@ local.properties
 
 # Gradle
 build/
+# IntelliJ
+.idea/

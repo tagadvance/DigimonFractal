@@ -4,28 +4,22 @@ import static java.awt.Color.BLACK;
 import static java.awt.image.BufferedImage.TYPE_INT_RGB;
 import static javax.swing.JOptionPane.ERROR_MESSAGE;
 
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Cursor;
 import java.awt.Desktop;
 import java.awt.Dimension;
-import java.awt.Graphics;
 import java.awt.Window;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Locale;
 import java.util.ResourceBundle;
 import java.util.concurrent.ExecutionException;
-
 import javax.imageio.ImageIO;
 import javax.swing.GroupLayout;
 import javax.swing.JEditorPane;
@@ -42,324 +36,342 @@ import javax.swing.LayoutStyle;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.WindowConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkEvent.EventType;
 import javax.swing.event.HyperlinkListener;
-import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 /**
- * 
- * @author Tag <tagadvance@gmail.com>
- *
+ * The Swing front end: a canvas, a slider for the seed, and a menu to save the image. Construct it
+ * on any thread, but hand it to {@link SwingUtilities#invokeLater(Runnable)} rather than calling
+ * {@link #run()} directly.
  */
-public class Main implements Runnable {
-	
-	static {
-		try {
-			String systemLookAndFeel = UIManager.getSystemLookAndFeelClassName();
-			UIManager.setLookAndFeel(systemLookAndFeel);
-		} catch (ClassNotFoundException | InstantiationException | IllegalAccessException
-				| javax.swing.UnsupportedLookAndFeelException e) {
-			e.printStackTrace(System.err);
-		}
-	}
+public final class Main implements Runnable {
 
-	private final ResourceBundle resourceBundle;
-	private final FractalPainter painter;
+  static {
+    try {
+      final String systemLookAndFeel = UIManager.getSystemLookAndFeelClassName();
+      UIManager.setLookAndFeel(systemLookAndFeel);
+    } catch (final ClassNotFoundException
+        | InstantiationException
+        | IllegalAccessException
+        | UnsupportedLookAndFeelException e) {
+      e.printStackTrace(System.err);
+    }
+  }
 
-	public Main(ResourceBundle resourceBundle, FractalPainter painter) {
-		super();
-		this.resourceBundle = resourceBundle;
-		this.painter = painter;
-	}
+  private final ResourceBundle resourceBundle;
+  private final FractalPainter painter;
 
-	public static void main(String[] args) {
-		Locale locale = Locale.getDefault();
-		ResourceBundle resourceBundle = ResourceBundle.getBundle("interface", locale);
-		double seed = 1;
-		FractalPainter painter = new FractalPainter(seed);
-		Main main = new Main(resourceBundle, painter);
-		SwingUtilities.invokeLater(main);
-	}
+  public Main(final ResourceBundle resourceBundle, final FractalPainter painter) {
+    super();
+    this.resourceBundle = resourceBundle;
+    this.painter = painter;
+  }
 
-	public void run() {
-		Window window = createMainWindow();
-		window.pack();
-		window.setLocationRelativeTo(null);
-		window.setVisible(true);
-	}
-	
-	public Window createMainWindow() {
-		String title = resourceBundle.getString("mainTitle");
-		final JFrame frame = new JFrame(title);
-		frame.setResizable(false);
-		frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+  static void main() {
+    final var locale = Locale.getDefault();
+    final var resourceBundle = ResourceBundle.getBundle("interface", locale);
+    final double seed = 1;
+    final var painter = new FractalPainter(seed);
+    final var main = new Main(resourceBundle, painter);
+    SwingUtilities.invokeLater(main);
+  }
 
-		final BufferedImage image = createCanvasImage();
-		final CanvasComponent canvas = new CanvasComponent(image);
-		canvas.setBackground(BLACK);
-		updateCanvasImage(canvas, image);
+  @Override
+  public void run() {
+    final var window = createMainWindow();
+    window.pack();
+    window.setLocationRelativeTo(null);
+    window.setVisible(true);
+  }
 
-		JSlider slider = new JSlider();
-		slider.setMajorTickSpacing(100);
-		slider.setMaximum(2000);
-		slider.setMinimum(1000);
-		slider.addChangeListener(new ChangeListener() {
+  public Window createMainWindow() {
+    final String title = resourceBundle.getString("mainTitle");
+    final JFrame frame = new JFrame(title);
+    frame.setResizable(false);
+    frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 
-			/**
-			 * Ignore final event, when the mouse is released. One could also
-			 * use <code>slider.getValueIsAdjusting()</code>; however, I like
-			 * watching the fractal change.
-			 */
-			private int previousValue;
+    final BufferedImage image = createCanvasImage();
+    final CanvasComponent canvas = new CanvasComponent(image);
+    canvas.setBackground(BLACK);
+    updateCanvasImage(canvas, image);
 
-			@Override
-			public void stateChanged(ChangeEvent e) {
-				Object source = e.getSource();
-				if (source instanceof JSlider) {
-					JSlider slider = (JSlider) source;
-					int value = slider.getValue();
-					if (value != previousValue) {
-						double seed = value / 1000d;
-						painter.setSeed(seed);
-						updateCanvasImage(canvas, image);
-						previousValue = value;
-					}
-				}
-			}
+    final var slider = new JSlider();
+    slider.setMajorTickSpacing(100);
+    slider.setMaximum(2000);
+    slider.setMinimum(1000);
+    slider.addChangeListener(
+        new ChangeListener() {
 
-		});
+          // Ignore the final event, when the mouse is released. One could also use
+          // slider.getValueIsAdjusting(); however, I like watching the fractal change.
+          private int previousValue;
 
-		String file = resourceBundle.getString("file");
-		JMenu menuFile = new JMenu(file);
-		String saveAs = resourceBundle.getString("saveAs");
-		JMenuItem menuItemSaveAs = new JMenuItem(saveAs, KeyEvent.VK_S);
-		KeyStroke controlSKeyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK);
-		menuItemSaveAs.setAccelerator(controlSKeyStroke);
-		menuItemSaveAs.addActionListener(new ActionListener() {
+          @Override
+          public void stateChanged(final ChangeEvent e) {
+            if (e.getSource() instanceof final JSlider slider) {
+              final int value = slider.getValue();
+              if (value != previousValue) {
+                final double seed = value / 1000d;
+                painter.setSeed(seed);
+                updateCanvasImage(canvas, image);
+                previousValue = value;
+              }
+            }
+          }
+        });
 
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				JFileChooser chooser = new JFileChooser();
-				String description = resourceBundle.getString("imageFiles");
-				FileFilter imageFilter = new FileNameExtensionFilter(description, ImageIO.getReaderFileSuffixes());
-				chooser.setFileFilter(imageFilter);
-				File selectedFile = new File("coast.png");
-				chooser.setSelectedFile(selectedFile);
-				int option = chooser.showSaveDialog(frame);
-				switch (option) {
-				case JFileChooser.APPROVE_OPTION:
-					File file = chooser.getSelectedFile();
-					saveAs(image, file);
-				}
-			}
+    final String file = resourceBundle.getString("file");
+    final var menuFile = new JMenu(file);
+    final String saveAs = resourceBundle.getString("saveAs");
+    final var menuItemSaveAs = new JMenuItem(saveAs, KeyEvent.VK_S);
+    final var controlSKeyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK);
+    menuItemSaveAs.setAccelerator(controlSKeyStroke);
+    menuItemSaveAs.addActionListener(
+        _ -> {
+          final var chooser = new JFileChooser();
+          final String description = resourceBundle.getString("imageFiles");
+          final var imageFilter =
+              new FileNameExtensionFilter(description, ImageIO.getReaderFileSuffixes());
+          chooser.setFileFilter(imageFilter);
+          final var selectedFile = new File("coast.png");
+          chooser.setSelectedFile(selectedFile);
+          final int option = chooser.showSaveDialog(frame);
+          if (option == JFileChooser.APPROVE_OPTION) {
+            saveAs(frame, image, chooser.getSelectedFile());
+          }
+        });
+    menuFile.add(menuItemSaveAs);
 
-			private void saveAs(final BufferedImage image, final File file) {
-				new SwingWorker<Boolean, Void>() {
+    final String refresh = resourceBundle.getString("refresh");
+    final var menuItemRefresh = new JMenuItem(refresh, KeyEvent.VK_R);
+    final var f5KeyStroke = KeyStroke.getKeyStroke("F5");
+    menuItemRefresh.setAccelerator(f5KeyStroke);
+    menuItemRefresh.addActionListener(_ -> updateCanvasImage(canvas, image));
+    menuFile.add(menuItemRefresh);
 
-					@Override
-					protected Boolean doInBackground() throws Exception {
-						String name = file.getName();
-						String extension = "png";
-						int index = name.indexOf('.');
-						if (index >= 0) {
-							extension = name.substring(index + 1);
-						}
-						return ImageIO.write(image, extension, file);
-					}
+    final String exit = resourceBundle.getString("exit");
+    final var menuItemExit = new JMenuItem(exit);
+    final int modifiers = 0;
+    final var escapeKeyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, modifiers);
+    menuItemExit.setAccelerator(escapeKeyStroke);
+    menuItemExit.addActionListener(_ -> System.exit(0));
+    menuFile.add(menuItemExit);
 
-					@Override
-					protected void done() {
-						super.done();
-						try {
-							@SuppressWarnings("unused")
-							boolean b = get();
-							// TODO: if (b) show saved dialog
-						} catch (InterruptedException e) {
-							Thread.currentThread().interrupt();
-						} catch (ExecutionException e) {
-							e.printStackTrace(System.err);
-							String message = e.getMessage();
-							String title = resourceBundle.getString("error");
-							JOptionPane.showMessageDialog(frame, message, title, ERROR_MESSAGE);
-						}
-					}
+    final String help = resourceBundle.getString("help");
+    final var menuHelp = createMenuHelp(help, frame);
 
-				}.execute();
-			}
+    final var menuBar = new JMenuBar();
+    menuBar.add(menuFile);
+    menuBar.add(menuHelp);
+    frame.setJMenuBar(menuBar);
 
-		});
-		menuFile.add(menuItemSaveAs);
+    final var contentPane = new JPanel();
+    final var layout = new GroupLayout(contentPane);
+    // the layout was generated in NetBeans
+    layout.setHorizontalGroup(
+        layout
+            .createParallelGroup(GroupLayout.Alignment.LEADING)
+            .addGroup(
+                GroupLayout.Alignment.TRAILING,
+                layout
+                    .createSequentialGroup()
+                    .addContainerGap()
+                    .addGroup(
+                        layout
+                            .createParallelGroup(GroupLayout.Alignment.TRAILING)
+                            .addComponent(
+                                canvas,
+                                GroupLayout.DEFAULT_SIZE,
+                                GroupLayout.DEFAULT_SIZE,
+                                Short.MAX_VALUE)
+                            .addComponent(
+                                slider,
+                                GroupLayout.DEFAULT_SIZE,
+                                GroupLayout.DEFAULT_SIZE,
+                                Short.MAX_VALUE))
+                    .addContainerGap()));
+    layout.setVerticalGroup(
+        layout
+            .createParallelGroup(GroupLayout.Alignment.LEADING)
+            .addGroup(
+                layout
+                    .createSequentialGroup()
+                    .addContainerGap()
+                    .addComponent(
+                        slider,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.DEFAULT_SIZE,
+                        GroupLayout.PREFERRED_SIZE)
+                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                    .addComponent(
+                        canvas, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addContainerGap()));
+    contentPane.setLayout(layout);
 
-		String refresh = resourceBundle.getString("refresh");
-		JMenuItem menuItemRefresh = new JMenuItem(refresh, KeyEvent.VK_R);
-		KeyStroke f5KeyStroke = KeyStroke.getKeyStroke("F5");
-		menuItemRefresh.setAccelerator(f5KeyStroke);
-		menuItemRefresh.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				updateCanvasImage(canvas, image);
-			}
-		});
-		menuFile.add(menuItemRefresh);
+    frame.setContentPane(contentPane);
+    return frame;
+  }
 
-		String exit = resourceBundle.getString("exit");
-		JMenuItem menuItemExit = new JMenuItem(exit);
-		int modifiers = 0;
-		KeyStroke escapeKeyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, modifiers);
-		menuItemExit.setAccelerator(escapeKeyStroke);
-		menuItemExit.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				System.exit(0);
-			}
-		});
-		menuFile.add(menuItemExit);
+  private JMenu createMenuHelp(final String help, final JFrame frame) {
+    final var menuHelp = new JMenu(help);
+    final var menuItemAbout = new JMenuItem("About", KeyEvent.VK_A);
+    menuItemAbout.addActionListener(
+        _ -> {
+          final String aboutTitle = resourceBundle.getString("aboutTitle");
+          final var dialog = new JFrame(aboutTitle);
+          final int width = 540, height = 240;
+          final var preferredSize = new Dimension(width, height);
+          final String text = resourceBundle.getString("aboutText");
+          final var about = createAbout(text, preferredSize);
+          dialog.setContentPane(about);
+          dialog.pack();
+          dialog.setLocationRelativeTo(frame);
+          dialog.setVisible(true);
+        });
+    menuHelp.add(menuItemAbout);
 
-		String help = resourceBundle.getString("help");
-		JMenu menuHelp = new JMenu(help);
-		JMenuItem menuItemAbout = new JMenuItem("About", KeyEvent.VK_A);
-		menuItemAbout.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				String title = resourceBundle.getString("aboutTitle");
-				JFrame dialog = new JFrame(title);
-				int width = 540, height = 240;
-				Dimension preferredSize = new Dimension(width, height);
-				String text = resourceBundle.getString("aboutText");
-				Container about = createAbout(text, preferredSize);
-				dialog.setContentPane(about);
-				dialog.pack();
-				dialog.setLocationRelativeTo(frame);
-				dialog.setVisible(true);
-			}
-		});
-		menuHelp.add(menuItemAbout);
-		
-		JMenuBar menuBar = new JMenuBar();
-		menuBar.add(menuFile);
-		menuBar.add(menuHelp);
-		frame.setJMenuBar(menuBar);
-		
-		JPanel contentPane = new JPanel();
-		GroupLayout layout = new GroupLayout(contentPane);
-		// the layout was generated in NetBeans
-		layout.setHorizontalGroup(
-			layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-			.addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-				.addContainerGap()
-				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.TRAILING)
-					.addComponent(canvas, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-					.addComponent(slider, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-				.addContainerGap())
-		);
-		layout.setVerticalGroup(
-			layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-			.addGroup(layout.createSequentialGroup()
-				.addContainerGap()
-				.addComponent(slider, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-				.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-				.addComponent(canvas, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-				.addContainerGap())
-		);
-		contentPane.setLayout(layout);
-		
-		frame.setContentPane(contentPane);
-		return frame;
-	}
-	
-	protected BufferedImage createCanvasImage() {
-		int width = 512, height = 200;
-		BufferedImage image = new BufferedImage(width, height, TYPE_INT_RGB);
-		return image;
-	}
-	
-	protected void updateCanvasImage(CanvasComponent canvas, BufferedImage image) {
-		Graphics g = image.getGraphics();
-		Color background = canvas.getBackground();
-		g.setColor(background);
-		int x = 0, y = 0, width = image.getWidth(), height = image.getHeight();
-		g.fillRect(x, y, width, height);
-		painter.paintCustom(g);
-		g.dispose();
-		canvas.repaint();
-	}
-	
-	public Container createAbout(String text, Dimension preferredSize) {
-		String mimeType = "text/html";
-		JEditorPane editor = new JEditorPane(mimeType, text);
-		editor.setOpaque(false);
-		editor.setEditable(false);
-		editor.addHyperlinkListener(new SimpleHyperlinkListener(editor));
-		editor.setFocusable(true);
-		JPanel panel = new JPanel();
-		panel.setPreferredSize(preferredSize);
-		GroupLayout layout = new GroupLayout(panel);
-		panel.setLayout(layout);
-		layout.setHorizontalGroup(
-			layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-			.addGroup(layout.createSequentialGroup()
-				.addContainerGap()
-				.addComponent(editor)
-				.addContainerGap())
-		);
-		layout.setVerticalGroup(
-			layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-			.addGroup(layout.createSequentialGroup()
-				.addContainerGap()
-				.addComponent(editor)
-				.addContainerGap())
-		);
-		return panel;
-	}
-	
-	public static class SimpleHyperlinkListener implements HyperlinkListener {
+    return menuHelp;
+  }
 
-		private final Component sourceComponent;
+  /**
+   * Writes {@code image} to {@code file} off the event thread, in the format named by the file's
+   * extension (PNG when it has none). A failure is shown in a dialog over {@code parent}.
+   */
+  private void saveAs(final JFrame parent, final BufferedImage image, final File file) {
+    new SwingWorker<Boolean, Void>() {
 
-		public SimpleHyperlinkListener(Component sourceComponent) {
-			super();
-			this.sourceComponent = sourceComponent;
-		}
+      @Override
+      protected Boolean doInBackground() throws Exception {
+        final String name = file.getName();
+        String extension = "png";
+        final int index = name.lastIndexOf('.');
+        if (index >= 0) {
+          extension = name.substring(index + 1);
+        }
+        return ImageIO.write(image, extension, file);
+      }
 
-		@Override
-		public void hyperlinkUpdate(HyperlinkEvent e) {
-			EventType eventType = e.getEventType();
-			if (eventType == EventType.ENTERED) {
-				Cursor cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
-				sourceComponent.setCursor(cursor);
-			} else if (eventType == EventType.ACTIVATED) {
-				URL url = e.getURL();
-				open(url);
-			} else if (eventType == EventType.EXITED) {
-				Cursor cursor = Cursor.getDefaultCursor();
-				sourceComponent.setCursor(cursor);
-			}
-		}
+      @Override
+      protected void done() {
+        super.done();
+        try {
+          @SuppressWarnings("unused")
+          final boolean b = get();
+          // TODO: if (b) show saved dialog
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+        } catch (ExecutionException e) {
+          e.printStackTrace(System.err);
+          final String message = e.getMessage();
+          final String title = resourceBundle.getString("error");
+          JOptionPane.showMessageDialog(parent, message, title, ERROR_MESSAGE);
+        }
+      }
+    }.execute();
+  }
 
-		public void open(URL url) {
-			String externalForm = url.toExternalForm();
-			Desktop desktop = Desktop.getDesktop();
-			try {
-				URI uri = url.toURI();
-				if (externalForm.startsWith("mailto:")) {
-					if (desktop.isSupported(Desktop.Action.MAIL)) {
-						desktop.mail(uri);
-					}
-				} else if (desktop.isSupported(Desktop.Action.BROWSE)) {
-					desktop.browse(uri);
-				}
-			} catch (URISyntaxException ex) {
-				ex.printStackTrace(System.err);
-			} catch (IOException ex) {
-				ex.printStackTrace(System.err);
-			}
-		}
+  /** The backing image is shared with the canvas, so repainting it repaints the canvas. */
+  private BufferedImage createCanvasImage() {
+    final int width = 512, height = 200;
 
-	}
+    return new BufferedImage(width, height, TYPE_INT_RGB);
+  }
+
+  /** Clears {@code image} to the canvas background, paints a fresh coastline, and repaints. */
+  private void updateCanvasImage(final CanvasComponent canvas, final BufferedImage image) {
+    final var g = image.getGraphics();
+    final var background = canvas.getBackground();
+    g.setColor(background);
+    final int x = 0, y = 0, width = image.getWidth(), height = image.getHeight();
+    g.fillRect(x, y, width, height);
+    painter.paintCustom(g);
+    g.dispose();
+    canvas.repaint();
+  }
+
+  /** Builds the About panel from an HTML string whose links open in the desktop browser. */
+  public Container createAbout(final String text, final Dimension preferredSize) {
+    final String mimeType = "text/html";
+    final var editor = new JEditorPane(mimeType, text);
+    editor.setOpaque(false);
+    editor.setEditable(false);
+    editor.addHyperlinkListener(new SimpleHyperlinkListener(editor));
+    editor.setFocusable(true);
+    final var panel = new JPanel();
+    panel.setPreferredSize(preferredSize);
+    final var layout = new GroupLayout(panel);
+    panel.setLayout(layout);
+    layout.setHorizontalGroup(
+        layout
+            .createParallelGroup(GroupLayout.Alignment.LEADING)
+            .addGroup(
+                layout
+                    .createSequentialGroup()
+                    .addContainerGap()
+                    .addComponent(editor)
+                    .addContainerGap()));
+    layout.setVerticalGroup(
+        layout
+            .createParallelGroup(GroupLayout.Alignment.LEADING)
+            .addGroup(
+                layout
+                    .createSequentialGroup()
+                    .addContainerGap()
+                    .addComponent(editor)
+                    .addContainerGap()));
+    return panel;
+  }
+
+  /**
+   * Opens activated links with the desktop browser, or the mail client for {@code mailto:}, and
+   * shows a hand cursor while hovering. A desktop that supports neither silently does nothing.
+   */
+  public static final class SimpleHyperlinkListener implements HyperlinkListener {
+
+    private final Component sourceComponent;
+
+    public SimpleHyperlinkListener(final Component sourceComponent) {
+      super();
+      this.sourceComponent = sourceComponent;
+    }
+
+    @Override
+    public void hyperlinkUpdate(final HyperlinkEvent e) {
+      final var eventType = e.getEventType();
+      if (eventType == EventType.ENTERED) {
+        final var cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
+        sourceComponent.setCursor(cursor);
+      } else if (eventType == EventType.ACTIVATED) {
+        final var url = e.getURL();
+        open(url);
+      } else if (eventType == EventType.EXITED) {
+        final var cursor = Cursor.getDefaultCursor();
+        sourceComponent.setCursor(cursor);
+      }
+    }
+
+    public void open(final URL url) {
+      final String externalForm = url.toExternalForm();
+      final var desktop = Desktop.getDesktop();
+      try {
+        final var uri = url.toURI();
+        if (externalForm.startsWith("mailto:")) {
+          if (desktop.isSupported(Desktop.Action.MAIL)) {
+            desktop.mail(uri);
+          }
+        } else if (desktop.isSupported(Desktop.Action.BROWSE)) {
+          desktop.browse(uri);
+        }
+      } catch (URISyntaxException | IOException ex) {
+        ex.printStackTrace(System.err);
+      }
+    }
+  }
 
 }

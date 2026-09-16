@@ -1,5 +1,9 @@
 # DigimonFractal
 
+[![CI](https://github.com/tagadvance/DigimonFractal/actions/workflows/ci.yml/badge.svg)](https://github.com/tagadvance/DigimonFractal/actions/workflows/ci.yml)
+[![Java 25](https://img.shields.io/badge/Java-25-orange)](https://openjdk.org/projects/jdk/25/)
+[![License: Unlicense](https://img.shields.io/badge/license-Unlicense-blue)](http://unlicense.org/)
+
 ## Synopsis
 While watching Digimon, some code briefly appeared on screen in episode 5, "Kabuterimon's Electro Shocker". Being the curious individual that I am, I wanted to know what it did. Apparently [other people have had the same inclination](http://digitalworldproblems.tumblr.com/post/76036641581/while-im-looking-at-that-moviecode-post-he); however, the images they had posted were long since dead. [The Wayback Machine](https://web.archive.org/web/20140626005307/http://digitalworldproblems.tumblr.com/post/76036641581/while-im-looking-at-that-moviecode-post-he) was of little help. A little perturbed, I decided to port the code to Java. This program is the result.
 

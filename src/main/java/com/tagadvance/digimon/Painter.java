@@ -2,13 +2,10 @@ package com.tagadvance.digimon;
 
 import java.awt.Graphics;
 
-/**
- * 
- * @author Tag <tagadvance@gmail.com>
- * 
- */
+/** Something that draws onto a caller-supplied {@link Graphics}. */
 public interface Painter {
 
-	public void paintCustom(Graphics g);
+  /** Draws onto {@code g}, which the caller owns and disposes. */
+  void paintCustom(Graphics g);
 
 }

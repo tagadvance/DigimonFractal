@@ -1,0 +1,30 @@
+# CI runners and other machines do not have ~/git/.editorconfig, so the rules that
+# matter to this repo are repeated here.
+root = true
+
+[*]
+indent_style = tab
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# google-java-format is two-space-only, and spotless enforces it.
+[*.java]
+indent_style = space
+indent_size = 2
+
+[*.{kt,kts}]
+indent_style = space
+indent_size = 4
+
+[*.{yml,yaml}]
+indent_style = space
+indent_size = 2
+
+[*.{json,properties}]
+indent_style = space
+indent_size = 2
+
+[*.md]
+trim_trailing_whitespace = false

@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Gradle build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # The toolchain the build asks for. Gradle would provision it via the foojay
+      # resolver, but installing it here is faster and offline.
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 25
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      # Format check and Error Prone are wired into `check`, so this is the whole
+      # gate. No JDK matrix: the toolchain fixes the compiler, so varying the
+      # runner's JDK would test nothing.
+      - run: ./gradlew build --stacktrace
